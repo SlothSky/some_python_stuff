@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 
 BASE_API_URL = 'https://api.le-systeme-solaire.net/rest'
 BODIES_AMENDMENT = '/bodies'
+X_TEXT_PERCENTAGE = 2
+Y_TEXT_PERCENTAGE = 5
 
 all_bodies = json.loads(requests.get(BASE_API_URL + BODIES_AMENDMENT).text)
 max_min_bodies = []
@@ -71,9 +73,21 @@ for body in all_bodies['bodies']:
 
 max_min_bodies.extend([orbit_max_object, orbit_min_object, rotation_max_object, rotation_min_object])
 
+# CALCULATE RANGES FOR LATER TEXT POSITION CALCULATION
+range_orbit = (max_min_bodies[0][0]['sideralOrbit'] - max_min_bodies[1][0]['sideralOrbit']) / 365
+range_rotation = (max_min_bodies[2][0]['sideralRotation'] - max_min_bodies[3][0]['sideralRotation']) / 24
+
+cleaned_range_orbit = range_orbit if range_orbit > 0 else range_orbit * -1
+cleaned_range_rotation = range_rotation if range_rotation > 0 else range_rotation * -1
+
 # ADD ANNOTATION TO ALL MAXIMUM AND MINIMUM BODIES
 for body in max_min_bodies:
-    plt.text(body[0]['sideralOrbit'] / 365, body[0]['sideralRotation'] / 24, body[0]['name'] + ' - ' + body[1], c='#878380')
+    # first calculate a nicer position (a little bit more to the upper left of the object)
+    cleaned_x = body[0]['sideralOrbit'] / 365 + cleaned_range_orbit / (100 / X_TEXT_PERCENTAGE)
+    cleaned_y = body[0]['sideralRotation'] / 24 + cleaned_range_rotation / (100 / Y_TEXT_PERCENTAGE)
+
+    # and then add the text to the calculated position
+    plt.text(cleaned_x, cleaned_y, body[0]['name'] + ' - ' + body[1], c='#878380')
 
 # SET DARKER BACKGROUND COLOR
 ax.set_facecolor('#343536')
